@@ -1,0 +1,15 @@
+.header {
+  background-color: #eee;
+}
+
+.header .content {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header .content ul {
+  display: flex;
+  gap: 20px;
+}

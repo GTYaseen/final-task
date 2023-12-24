@@ -1,113 +1,162 @@
-import Image from 'next/image'
+"use client";
+import Header from "@/components/Header/header";
+import { Image, Card, CardBody, CardFooter, Button } from "@nextui-org/react";
+import styles from "./page.module.css";
+import AppContainer from "@/components/Contaner/container";
+import { useEffect, useState } from "react";
+import { categories , products } from "@/fake";
 
 export default function Home() {
+  const [cart, setCart] = useState([]);
+  const [list, setList] = useState([]);
+  const [cats, setCats] = useState([]);
+
+  const getProducts = async (cat) => {
+    let url = "http://localhost:3000/api/products";
+    if (cat) url = `http://localhost:3000/api/products?cat=${cat}`;
+
+    try {
+      let res = await fetch(url);
+      let jsonData = await res.json();
+      setList(jsonData);
+    } catch (error) {}
+  };
+
+  const getCategories = async () => {
+    try {
+      let res = await fetch("http://localhost:3000/api/categories");
+      let jsonData = await res.json();
+      setCats(jsonData);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    getCategories();
+    getProducts();
+  }, []);
+
+  const handleAdd = (item) => {
+    let index = cart?.findIndex((el) => el.product.id === item.id);
+    if (index === -1) {
+      let newObj = { product: item, qt: 1 };
+      setCart([...cart, newObj]);
+    }
+  };
+
+  const handleInc = (item) => {
+    setCart(
+      cart.map((el) => {
+        if (el?.product?.id === item?.product?.id) el.qt = el.qt + 1;
+        return el;
+      })
+    );
+  };
+
+  const handledec = (item) => {
+    if (item.qt === 1)
+      setCart(cart.filter((el) => el.product.id !== item.product.id));
+    else
+      setCart(
+        cart.map((el) => {
+          if (el?.product?.id === item?.product?.id) el.qt = el.qt - 1;
+          return el;
+        })
+      );
+  };
+
+  const getTotal = () => {
+    return cart
+      ?.map((el) => el.product.price * el.qt)
+      ?.reduce((a, b) => a + b, 0);
+  };
+
+  const handleConfirm = async () => {
+    var raw = JSON.stringify({
+      items: { cart },
+      number: 1
+    });
+
+    try {
+      let res = await fetch("http://localhost:3000/api/invoice", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: raw,
+      });
+      let jsonData = await res.json();
+      console.log(jsonData);
+    } catch (error) {}
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <main className={styles.home}>
+      <Header />
+      <AppContainer width={1300}>
+        <div className={styles.content}>
+          <div className={styles.items}>
+            <div className={styles.categories}>
+              {categories.map((el) => (
+                <Card isPressable onPress={() => getProducts(el.id)}>
+                  <CardBody>
+                    <p>{el.name}</p>
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+            <div className="gap-6 grid grid-cols-2 sm:grid-cols-4">
+              {products.map((item, index) => (
+                <Card
+                  shadow="sm"
+                  key={index}
+                  isPressable
+                  onPress={() => handleAdd(item)}
+                >
+                  <CardBody className="overflow-visible p-0">
+                    <Image
+                      shadow="sm"
+                      radius="lg"
+                      width="100%"
+                      alt={item.name}
+                      className="w-full object-cover h-[140px]"
+                      src={item.image}
+                    />
+                  </CardBody>
+                  <CardFooter className="text-small justify-between">
+                    <b>{item.name}</b>
+                    <p className="text-default-500">{item.price}</p>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+          <div className={styles.invoice}>
+            <h3>Items List</h3>
+            <div className={styles.itemsList}>
+              {cart.map((el, i) => (
+                <div key={i} className={styles.invoiceCard}>
+                  <div className={styles.qt}>
+                    <button onClick={() => handleInc(el)}>+</button>
+                    <p>{el.qt}</p>
+                    <button onClick={() => handledec(el)}>-</button>
+                  </div>
+                  <div style={{ textAlign: "end" }}>
+                    <p>{el.product.name}</p>
+                    <b>{el.product.price * el.qt}</b>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.total}>
+              <p>Total Value</p>
+              <h1>{Number(getTotal()).toLocaleString("en")}</h1>
+            </div>
+            <div className={styles.action}>
+              <Button onClick={handleConfirm}>Confirm</Button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      </AppContainer>
     </main>
-  )
+  );
 }
