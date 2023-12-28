@@ -4,20 +4,32 @@ const prisma = new PrismaClient();
 export async function GET(req) {
   const searchParams = req.nextUrl.searchParams;
   const cat = searchParams.get("cat");
+  const query = searchParams.get("query");
 
-  let products = await prisma.product.findMany(
-    cat
+  let whereClause = {};
+
+  if (query) {
+    whereClause = {
+      name: {
+        contains: query,
+      },
+    };
+  }
+
+  let products = await prisma.product.findMany({
+    where: cat
       ? {
-          where: {
-            categoryId: parseInt(cat),
-          },
+          categoryId: parseInt(cat),
+          ...whereClause,
         }
-      : {}
-  );
+      : whereClause,
+    orderBy: {
+      id: 'asc', // Order by id in ascending order
+    },
+  });
 
   return Response.json(products);
 }
-
 export async function POST(req) {
   const body = await req.json();
   try {
