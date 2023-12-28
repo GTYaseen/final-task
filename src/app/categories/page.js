@@ -2,20 +2,23 @@
 import Header from "@/components/Header/header";
 import React, { useState, useEffect } from "react";
 import AppContainer from "@/components/Contaner/container";
-import { Card, CardBody, CardFooter, Image, Input } from "@nextui-org/react"; // Make sure to import Input from the library
-import { Button, Modal, Table } from "antd";
+import { Image } from "@nextui-org/react"; // Make sure to import Input from the library
+import { Button, Modal, Table, Input } from "antd";
 import { Space } from "@/components/space/Space";
 import { FaEdit } from "react-icons/fa";
+import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 import { FaFileUpload } from "react-icons/fa";
 
 const Page = () => {
-  // Change 'page' to 'Page' to follow naming conventions
   const [search, setSearch] = useState("");
+  const [refresh, setRefresh] = useState(0);
   const [list, setList] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [editFormData, setEditFormData] = useState({}); // Define state for edit form data
   const [selectedImage, setSelectedImage] = useState(null); // Define state for selected image
+  const [open,setOpen]=useState(false)
+  const [newData, setNewData] = useState({});
 
   const showModal = (id) => {
     setSelectedProductId(id);
@@ -26,6 +29,7 @@ const Page = () => {
 
   const handleCancel = () => {
     setSelectedProductId(null);
+    setOpen(false);
   };
 
   const handleEditInputChange = (e) => {
@@ -34,6 +38,12 @@ const Page = () => {
       ...editFormData,
       [e.target.name]: e.target.value,
     });
+  };
+  const handleAddInputChange = (e) => {
+    setNewData((prevData) => ({
+      ...prevData,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   useEffect(() => {
@@ -48,7 +58,7 @@ const Page = () => {
       }
     };
     fetchData();
-  }, [search]);
+  }, [search, refresh]);
   const handleEditClick = () => {
     try {
       let url = `http://localhost:3000/api/categories/${selectedProductId}`;
@@ -106,12 +116,50 @@ const Page = () => {
       ),
     },
   ];
+  const handleAddClick = () => {
+    try {
+      let url = `http://localhost:3000/api/categories`;
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+    } catch (error) {
+      console.error("Error updating data:", error);
+    }
+    setOpen(false);
+    setRefresh(refresh + 1);
+  };
 
   return (
     <>
       <Header />
       <Space height={20} />
       <AppContainer width={1300}>
+        <Space width="100%" height="20px" />
+        <div className="flex justify-between">
+          <Input
+            placeholder="Search..."
+            //onChange={}
+            onPressEnter={(e) => setSearch(e.target.value)}
+          />
+          <div className="flex">
+            <Space width="150px" />
+            <Button onClick={() => setOpen(true)} size="large">
+              Add +
+            </Button>
+            <Button
+              className="default"
+              onClick={() => setRefresh(refresh + 1)}
+              size="large"
+            >
+              <IoIosRefresh />
+            </Button>
+          </div>
+        </div>
+        <Space width="100%" height="20px" />
         <Table columns={columns} dataSource={list} />
         <Modal
           title="Product Details"
@@ -138,6 +186,19 @@ const Page = () => {
           <Button type="link" style={{ fontSize: "20px" }}>
             <FaFileUpload />
           </Button>
+        </Modal>
+        {/* Add Modal */}
+        <Modal
+          title="Product Details"
+          open={open}
+          onOk={handleAddClick}
+          onCancel={handleCancel}
+          okType="default"
+        >
+          <p>name</p>
+          <Input name="name" onChange={handleAddInputChange} />
+          <p>image</p>
+          <Input name="image" onChange={handleAddInputChange} />
         </Modal>
       </AppContainer>
     </>
