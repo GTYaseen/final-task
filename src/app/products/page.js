@@ -66,7 +66,7 @@ const Page = () => {
   };
   const handleDeleteClick = (id) => {
     try {
-      let url = `http://localhost:3000/api/products/${id}`;
+      let url = `https://final-task-noaf.vercel.app/api/products/${id}`;
       fetch(url, {
         method: "DELETE",
       });
@@ -80,7 +80,7 @@ const Page = () => {
       try {
         setLoading(true); // Set loading to true before fetching data
 
-        let url = `http://localhost:3000/api/products?query=${search}`;
+        let url = `https://final-task-noaf.vercel.app/api/products?query=${search}`;
         let res = await fetch(url);
         let jsonData = await res.json();
         setList(jsonData);
@@ -95,7 +95,7 @@ const Page = () => {
   }, [search, refresh]);
   const handleEditClick = () => {
     try {
-      let url = `http://localhost:3000/api/products/${selectedProductId}`;
+      let url = `https://final-task-noaf.vercel.app/api/products/${selectedProductId}`;
       fetch(url, {
         method: "PUT",
         headers: {
@@ -119,7 +119,7 @@ const Page = () => {
   };
   const handleAddClick = () => {
     try {
-      let url = `http://localhost:3000/api/products`;
+      let url = `https://final-task-noaf.vercel.app/api/products`;
       fetch(url, {
         method: "POST",
         headers: {
