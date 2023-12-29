@@ -11,7 +11,7 @@ import { FaFileUpload } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import * as LR from "@uploadcare/blocks";
-import { uploadFile } from '@uploadcare/upload-client'
+import { uploadFile } from "@uploadcare/upload-client";
 
 LR.registerBlocks(LR);
 const Page = () => {
@@ -23,6 +23,7 @@ const Page = () => {
   const [newData, setNewData] = useState({});
   const [selectedImage, setSelectedImage] = useState(null); // Define state for selected image
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const showModal = (id) => {
     setSelectedProductId(id);
     const selectedProduct = list.find((product) => product.id === id);
@@ -74,21 +75,24 @@ const Page = () => {
     }
     setRefresh(refresh + 1);
   };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true); // Set loading to true before fetching data
+
         let url = `http://localhost:3000/api/products?query=${search}`;
         let res = await fetch(url);
         let jsonData = await res.json();
         setList(jsonData);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false); // Set loading to false after data is fetched
       }
     };
-    console.log(refresh);
+
     fetchData();
-  }, [refresh, search]);
+  }, [search, refresh]);
   const handleEditClick = () => {
     try {
       let url = `http://localhost:3000/api/products/${selectedProductId}`;
@@ -98,12 +102,20 @@ const Page = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(editFormData),
-      });
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          setRefresh((prevRefresh) => prevRefresh + 1);
+        })
+        .catch((error) => {
+          console.error("Error updating data:", error);
+        });
     } catch (error) {
       console.error("Error updating data:", error);
     }
     setSelectedProductId(null);
-    setRefresh(refresh + 1);
   };
   const handleAddClick = () => {
     try {
@@ -206,7 +218,7 @@ const Page = () => {
           </Button>
         </div>
         <Space width="100%" height="20px" />
-        <Table dataSource={list} columns={columns} />
+        <Table columns={columns} dataSource={list} loading={loading} />
         <Modal
           title="Product Details"
           open={selectedProductId}

@@ -5,7 +5,7 @@ export async function PUT(req, { params }) {
   const { id } = params;
   const body = await req.json();
   try {
-    let product = await prisma.category.update({
+    let category = await prisma.category.update({
       where: {
         id: parseInt(id),
       },
@@ -13,7 +13,7 @@ export async function PUT(req, { params }) {
     });
     return Response.json({
       success: true,
-      product,
+      category,
     });
   } catch (error) {
     return Response.json({
@@ -25,14 +25,30 @@ export async function PUT(req, { params }) {
 export async function DELETE(req, { params }) {
   const { id } = params;
   try {
-    let product = await prisma.category.delete({
+    // Check if there are associated products
+    const productsInCategory = await prisma.product.findMany({
+      where: {
+        categoryId: parseInt(id),
+      },
+    });
+
+    if (productsInCategory.length > 0) {
+      return Response.json({
+        success: false,
+        error: "Cannot delete category with associated products.",
+      });
+    }
+
+    // If no associated products, proceed with deletion
+    const deletedCategory = await prisma.category.delete({
       where: {
         id: parseInt(id),
       },
     });
+
     return Response.json({
       success: true,
-      product,
+      category: deletedCategory,
     });
   } catch (error) {
     return Response.json({

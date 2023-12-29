@@ -18,3 +18,17 @@ export async function POST(req) {
     });
   }
 }
+export async function GET() {
+  try {
+    let invoices = await prisma.invoice.findMany();
+    return Response.json({
+      success: true,
+      invoices,
+    });
+  } catch (error) {
+    return Response.json({
+      success: false,
+      error,
+    });
+  }
+}

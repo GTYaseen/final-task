@@ -20,7 +20,7 @@ const Header = () => {
               <Link href="/categories">Categories</Link>
             </li>
             <li>
-              <Link href="/about">About</Link>
+              <Link href="/invoice">invoice</Link>
             </li>
           </ul>
         </div>

@@ -3,12 +3,15 @@ import Header from "@/components/Header/header";
 import React, { useState, useEffect } from "react";
 import AppContainer from "@/components/Contaner/container";
 import { Image } from "@nextui-org/react"; // Make sure to import Input from the library
-import { Button, Modal, Table, Input } from "antd";
+import { Button, Modal, Table, Input, Typography, Popconfirm } from "antd";
+import { QuestionCircleOutlined } from "@ant-design/icons";
 import { Space } from "@/components/space/Space";
 import { FaEdit } from "react-icons/fa";
 import { IoIosRefresh } from "react-icons/io";
 import { MdDelete } from "react-icons/md";
 import { FaFileUpload } from "react-icons/fa";
+
+const { Text } = Typography;
 
 const Page = () => {
   const [search, setSearch] = useState("");
@@ -17,8 +20,9 @@ const Page = () => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [editFormData, setEditFormData] = useState({}); // Define state for edit form data
   const [selectedImage, setSelectedImage] = useState(null); // Define state for selected image
-  const [open,setOpen]=useState(false)
+  const [open, setOpen] = useState(false);
   const [newData, setNewData] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const showModal = (id) => {
     setSelectedProductId(id);
@@ -45,18 +49,57 @@ const Page = () => {
       [e.target.name]: e.target.value,
     }));
   };
+  const handleDeleteClick = async (id) => {
+    try {
+      let url = `http://localhost:3000/api/categories/${id}`;
+      const response = await fetch(url, {
+        method: "DELETE",
+      });
 
+      const responseData = await response.json();
+
+      if (response.ok) {
+        if (
+          responseData.error &&
+          responseData.error.includes(
+            "Cannot delete category with associated products"
+          )
+        ) {
+          // Use Ant Design Modal for a more styled and customizable alert
+          Modal.error({
+            title:
+              "Cannot delete category because there are associated products.",
+            okButtonProps: { type: "default" },
+          });
+        } else {
+          console.error("Error deleting category:", responseData.error);
+        }
+      } else {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // This part will be executed only if the response is successful
+      setRefresh((prevRefresh) => prevRefresh + 1);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+    }
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true); // Set loading to true before fetching data
+
         let url = `http://localhost:3000/api/categories?query=${search}`;
         let res = await fetch(url);
         let jsonData = await res.json();
         setList(jsonData);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false); // Set loading to false after data is fetched
       }
     };
+
     fetchData();
   }, [search, refresh]);
   const handleEditClick = () => {
@@ -68,7 +111,16 @@ const Page = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(editFormData),
-      });
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          setRefresh((prevRefresh) => prevRefresh + 1);
+        })
+        .catch((error) => {
+          console.error("Error updating data:", error);
+        });
     } catch (error) {
       console.error("Error updating data:", error);
     }
@@ -109,9 +161,19 @@ const Page = () => {
           <Button onClick={() => showModal(record.id)} size="large">
             <FaEdit />
           </Button>
-          <Button type="primary" danger size="large">
-            <MdDelete />
-          </Button>
+          <Popconfirm
+            title="Delete the item"
+            description="Are you sure to delete this item?"
+            okText="Yes"
+            cancelText="No"
+            okType="danger"
+            onConfirm={() => handleDeleteClick(record.id)}
+            icon={<QuestionCircleOutlined style={{ color: "red" }} />}
+          >
+            <Button type="primary" danger size="large">
+              <MdDelete />
+            </Button>
+          </Popconfirm>
         </>
       ),
     },
@@ -160,7 +222,7 @@ const Page = () => {
           </div>
         </div>
         <Space width="100%" height="20px" />
-        <Table columns={columns} dataSource={list} />
+        <Table columns={columns} dataSource={list} loading={loading} />
         <Modal
           title="Product Details"
           open={selectedProductId}
@@ -170,13 +232,13 @@ const Page = () => {
           {selectedImage && (
             <Image src={selectedImage} alt={"Image"} width={350} height={350} />
           )}
-          <p>name</p>
+          <Text>name</Text>
           <Input
             name="name"
             value={editFormData.name}
             onChange={handleEditInputChange}
           />
-          <p>image</p>
+          <Text>image</Text>
           <Input
             name="image"
             value={editFormData.image}
@@ -195,9 +257,9 @@ const Page = () => {
           onCancel={handleCancel}
           okType="default"
         >
-          <p>name</p>
+          <Text>name</Text>
           <Input name="name" onChange={handleAddInputChange} />
-          <p>image</p>
+          <Text>image</Text>
           <Input name="image" onChange={handleAddInputChange} />
         </Modal>
       </AppContainer>
