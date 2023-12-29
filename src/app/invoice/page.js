@@ -35,7 +35,9 @@ const Page = () => {
       key: "items",
       render: (items) => {
         const cart = items && items.cart ? items.cart : [];
-        const cartItems = cart.map((cartItem) => cartItem.product.name).join(", ");
+        const cartItems = cart
+          .map((cartItem) => cartItem.product.name)
+          .join(", ");
         return <div>{cartItems}</div>;
       },
     },
@@ -44,7 +46,14 @@ const Page = () => {
       dataIndex: "action",
       key: "action",
       render: (_, record) => (
-        <Button onClick={() => handleExportPDF(record)}>Export to PDF</Button>
+        <>
+          <Button onClick={() => handleExportPDF(record)}>Export to PDF</Button>
+          {selectedInvoice && (
+            <Button onClick={() => exportToPDF(selectedInvoice)}>
+              Export to PDF
+            </Button>
+          )}
+        </>
       ),
     },
   ];
@@ -66,7 +75,10 @@ const Page = () => {
           const invoices = jsonData.invoices;
           const formattedData = invoices.map((item) => ({
             ...item,
-            items: typeof item.items === "string" ? JSON.parse(item.items) : item.items,
+            items:
+              typeof item.items === "string"
+                ? JSON.parse(item.items)
+                : item.items,
           }));
 
           setList(formattedData);
@@ -95,14 +107,17 @@ const Page = () => {
       id: item.id,
       date: item.date,
       number: item.number,
-      items: item.items && item.items.cart ? item.items.cart.map(cartItem => cartItem.product.name).join(", ") : "",
+      items:
+        item.items && item.items.cart
+          ? item.items.cart.map((cartItem) => cartItem.product.name).join(", ")
+          : "",
     }));
 
     // Create the PDF document
     const pdf = new jsPDF();
     pdf.autoTable({
-      head: [['ID', 'Date', 'Number', 'Items']],
-      body: dataPDF.map(row => [row.id, row.date, row.number, row.items]),
+      head: [["ID", "Date", "Number", "Items"]],
+      body: dataPDF.map((row) => [row.id, row.date, row.number, row.items]),
     });
 
     // Save PDF file
@@ -114,11 +129,13 @@ const Page = () => {
       <Header />
       <AppContainer width={1300}>
         <Space height={20} />
-        <Table id="invoiceTable" columns={columns} dataSource={list} loading={loading} />
+        <Table
+          id="invoiceTable"
+          columns={columns}
+          dataSource={list}
+          loading={loading}
+        />
       </AppContainer>
-      {selectedInvoice && (
-        <Button onClick={() => exportToPDF(selectedInvoice)}>Export to PDF</Button>
-      )}
     </div>
   );
 };
