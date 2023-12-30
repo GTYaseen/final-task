@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+import cors from "cors";
 
+app.use(cors());
 export async function GET(req) {
   const searchParams = req.nextUrl.searchParams;
   const cat = searchParams.get("cat");

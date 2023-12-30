@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+import cors from "cors";
 
+app.use(cors());
 export async function PUT(req, { params }) {
   const { id } = params;
   const body = await req.json();
