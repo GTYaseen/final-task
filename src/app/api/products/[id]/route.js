@@ -1,8 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import cors from "cors";
 
-app.use(cors());
 export async function PUT(req, { params }) {
   const { id } = params;
   const body = await req.json();
@@ -13,17 +11,33 @@ export async function PUT(req, { params }) {
       },
       data: body,
     });
-    return Response.json({
-      success: true,
-      product,
-    });
+    
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'PUT',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: JSON.stringify({
+        success: true,
+        product,
+      }),
+    };
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'PUT',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: JSON.stringify({
+        success: false,
+        error,
+      }),
+    };
   }
 }
+
 export async function DELETE(req, { params }) {
   const { id } = params;
   try {
@@ -32,14 +46,27 @@ export async function DELETE(req, { params }) {
         id: parseInt(id),
       },
     });
-    return Response.json({
-      success: true,
-      product,
-    });
+
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'DELETE',
+      },
+      body: JSON.stringify({
+        success: true,
+        product,
+      }),
+    };
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'DELETE',
+      },
+      body: JSON.stringify({
+        success: false,
+        error,
+      }),
+    };
   }
 }

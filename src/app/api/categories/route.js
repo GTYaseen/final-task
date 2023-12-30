@@ -1,8 +1,18 @@
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-import cors from "cors";
 
-app.use(cors());
+const prisma = new PrismaClient();
+
+// Function to handle CORS headers
+function setCorsHeaders(response) {
+  response.headers.set("Access-Control-Allow-Origin", "*"); // Update with your specific allowed origins
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  return response;
+}
+
 export async function GET(req) {
   const searchParams = req.nextUrl.searchParams;
   const cat = searchParams.get("cat");
@@ -26,11 +36,12 @@ export async function GET(req) {
         }
       : whereClause,
     orderBy: {
-      id: "asc", // Order by id in ascending order
+      id: "asc",
     },
   });
 
-  return Response.json(products);
+  const response = new Response(JSON.stringify(products));
+  return setCorsHeaders(response);
 }
 
 export async function POST(req) {
@@ -39,14 +50,21 @@ export async function POST(req) {
     let category = await prisma.category.create({
       data: body,
     });
-    return Response.json({
-      success: true,
-      category,
-    });
+
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        category,
+      })
+    );
+    return setCorsHeaders(response);
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    const response = new Response(
+      JSON.stringify({
+        success: false,
+        error,
+      })
+    );
+    return setCorsHeaders(response);
   }
 }

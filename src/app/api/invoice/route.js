@@ -1,8 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import cors from "cors";
-
-app.use(cors());
 
 export async function POST(req) {
   const body = await req.json();
@@ -10,28 +7,55 @@ export async function POST(req) {
     let invoice = await prisma.invoice.create({
       data: body,
     });
-    return Response.json({
-      success: true,
-      invoice,
-    });
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: JSON.stringify({
+        success: true,
+        invoice,
+      }),
+    };
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: JSON.stringify({
+        success: false,
+        error,
+      }),
+    };
   }
 }
+
 export async function GET() {
   try {
     let invoices = await prisma.invoice.findMany();
-    return Response.json({
-      success: true,
-      invoices,
-    });
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'GET',
+      },
+      body: JSON.stringify({
+        success: true,
+        invoices,
+      }),
+    };
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    return {
+      headers: {
+        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
+        'Access-Control-Allow-Methods': 'GET',
+      },
+      body: JSON.stringify({
+        success: false,
+        error,
+      }),
+    };
   }
 }

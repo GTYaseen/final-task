@@ -1,8 +1,18 @@
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-import cors from "cors";
 
-app.use(cors());
+const prisma = new PrismaClient();
+
+// Function to handle CORS headers
+function setCorsHeaders(response) {
+  response.headers.set("Access-Control-Allow-Origin", "*"); // Update with your specific allowed origins
+  response.headers.set("Access-Control-Allow-Methods", "PUT, DELETE, OPTIONS");
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  return response;
+}
+
 export async function PUT(req, { params }) {
   const { id } = params;
   const body = await req.json();
@@ -13,17 +23,25 @@ export async function PUT(req, { params }) {
       },
       data: body,
     });
-    return Response.json({
-      success: true,
-      category,
-    });
+
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        category,
+      })
+    );
+    return setCorsHeaders(response);
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    const response = new Response(
+      JSON.stringify({
+        success: false,
+        error,
+      })
+    );
+    return setCorsHeaders(response);
   }
 }
+
 export async function DELETE(req, { params }) {
   const { id } = params;
   try {
@@ -35,10 +53,13 @@ export async function DELETE(req, { params }) {
     });
 
     if (productsInCategory.length > 0) {
-      return Response.json({
-        success: false,
-        error: "Cannot delete category with associated products.",
-      });
+      const response = new Response(
+        JSON.stringify({
+          success: false,
+          error: "Cannot delete category with associated products.",
+        })
+      );
+      return setCorsHeaders(response);
     }
 
     // If no associated products, proceed with deletion
@@ -48,14 +69,20 @@ export async function DELETE(req, { params }) {
       },
     });
 
-    return Response.json({
-      success: true,
-      category: deletedCategory,
-    });
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        category: deletedCategory,
+      })
+    );
+    return setCorsHeaders(response);
   } catch (error) {
-    return Response.json({
-      success: false,
-      error,
-    });
+    const response = new Response(
+      JSON.stringify({
+        success: false,
+        error,
+      })
+    );
+    return setCorsHeaders(response);
   }
 }
