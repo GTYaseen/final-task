@@ -1,5 +1,13 @@
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
+
+function setCorsHeaders(response) {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return response;
+}
 
 export async function GET(req) {
   const searchParams = req.nextUrl.searchParams;
@@ -17,7 +25,7 @@ export async function GET(req) {
   }
 
   try {
-    let products = await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: cat
         ? {
             categoryId: parseInt(cat),
@@ -25,60 +33,38 @@ export async function GET(req) {
           }
         : whereClause,
       orderBy: {
-        id: 'asc', // Order by id in ascending order
+        id: "asc",
       },
     });
 
-    return {
-      headers: {
-        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
-        'Access-Control-Allow-Methods': 'GET',
-      },
-      body: JSON.stringify(products),
-    };
+    const response = new Response(JSON.stringify(products));
+    return setCorsHeaders(response);
   } catch (error) {
-    return {
-      headers: {
-        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
-        'Access-Control-Allow-Methods': 'GET',
-      },
-      body: JSON.stringify({
-        success: false,
-        error,
-      }),
-    };
+    const response = new Response(JSON.stringify({
+      success: false,
+      error: error.message, // Include only the error message for security
+    }));
+    return setCorsHeaders(response);
   }
 }
 
 export async function POST(req) {
   const body = await req.json();
   try {
-    let product = await prisma.product.create({
+    const product = await prisma.product.create({
       data: body,
     });
 
-    return {
-      headers: {
-        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: JSON.stringify({
-        success: true,
-        product,
-      }),
-    };
+    const response = new Response(JSON.stringify({
+      success: true,
+      product,
+    }));
+    return setCorsHeaders(response);
   } catch (error) {
-    return {
-      headers: {
-        'Access-Control-Allow-Origin': '*', // Adjust this to the appropriate origin in production
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: JSON.stringify({
-        success: false,
-        error,
-      }),
-    };
+    const response = new Response(JSON.stringify({
+      success: false,
+      error: error.message,
+    }));
+    return setCorsHeaders(response);
   }
 }
